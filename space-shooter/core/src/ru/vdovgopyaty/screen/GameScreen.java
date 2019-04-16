@@ -11,17 +11,21 @@ public class GameScreen extends BaseScreen {
     private final int BACKGROUND_SIZE = 2048;
     private Texture spaceship;
     private final int SPACESHIP_SIZE = 192;
-    private Vector2 touch;
-    private Vector2 spaceshipPosition;
-    private Vector2 spaceshipVelocity;
+    private final int SPEED = 500;
+    private Vector2 position;
+    private Vector2 newPosition;
+    private Vector2 direction;
+    private Vector2 velocity;
 
     @Override
     public void show() {
         super.show();
-        touch = new Vector2();
-        spaceshipPosition = new Vector2((Gdx.graphics.getWidth() - SPACESHIP_SIZE) / 2,
-                SPACESHIP_SIZE / 2);
-        spaceshipVelocity = new Vector2(3, 2);
+        position = new Vector2();
+        setPosition(new Vector2(Gdx.graphics.getWidth() / 2, SPACESHIP_SIZE / 2));
+        newPosition = getPosition().cpy();
+        velocity = new Vector2(3, 2);
+        direction = new Vector2();
+        velocity = new Vector2(0, 0);
         background = new Texture("background.jpg");
         spaceship = new Texture("spaceship.png");
     }
@@ -31,8 +35,12 @@ public class GameScreen extends BaseScreen {
         super.render(delta);
         batch.begin();
         batch.draw(background, 0, 0, BACKGROUND_SIZE, BACKGROUND_SIZE);
-        batch.draw(spaceship, spaceshipPosition.x, spaceshipPosition.y,
-                SPACESHIP_SIZE, SPACESHIP_SIZE);
+
+        if (newPosition.cpy().sub(getPosition()).len() > velocity.len()) {
+            position.add(velocity);
+        }
+
+        batch.draw(spaceship, position.x, position.y, SPACESHIP_SIZE, SPACESHIP_SIZE);
         batch.end();
     }
 
@@ -44,21 +52,18 @@ public class GameScreen extends BaseScreen {
 
     @Override
     public boolean touchDown(int screenX, int screenY, int pointer, int button) {
-        touch.set(screenX, Gdx.graphics.getHeight() - screenY);
-        System.out.println("Нажатие " + touch.x + " " + touch.y);
-
-        Vector2 movement = spaceshipPosition.sub(touch);
-        System.out.println("Длина " + movement.len());
-
-        Vector2 direction = new Vector2(movement).nor();
-        System.out.println("Направление " + direction.x + " " + direction.y);
-
-        setSpaceshipPosition(touch);
-
+        newPosition.set(screenX, Gdx.graphics.getHeight() - screenY);
+        Vector2 displacement = newPosition.cpy().sub(getPosition());
+        direction = displacement.cpy().nor();
+        velocity = direction.cpy().scl(SPEED * Gdx.graphics.getDeltaTime());
         return false;
     }
 
-    private void setSpaceshipPosition(Vector2 in) {
-        spaceshipPosition.set(new Vector2(in.x - SPACESHIP_SIZE / 2,in.y - SPACESHIP_SIZE / 2));
+    private Vector2 getPosition() {
+        return new Vector2(position.x + SPACESHIP_SIZE / 2, position.y + SPACESHIP_SIZE / 2);
+    }
+
+    private void setPosition(Vector2 newPosition) {
+        position.set(newPosition.x - SPACESHIP_SIZE / 2, newPosition.y - SPACESHIP_SIZE / 2);
     }
 }
